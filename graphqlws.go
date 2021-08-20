@@ -121,10 +121,10 @@ func (h *graphqlWSHandler) HandleClose() {
 // ServeGraphQLWS serves a graphql-ws WebSocket connection. This method hijacks connections. To
 // gracefully close them, use CloseHijackedConnections.
 func (api *API) ServeGraphQLWS(w http.ResponseWriter, r *http.Request) {
-	if !websocket.IsWebSocketUpgrade(r) {
-		http.Error(w, "not a websocket upgrade", http.StatusBadRequest)
-		return
-	}
+// 	if !websocket.IsWebSocketUpgrade(r) {
+// 		http.Error(w, "not a websocket upgrade", http.StatusBadRequest)
+// 		return
+// 	}
 
 	var upgrader = websocket.Upgrader{
 		CheckOrigin:       api.config.WebSocketOriginCheck,
