@@ -65,7 +65,11 @@ func ValidateCost(operationName string, variableValues map[string]interface{}, m
 
 		var coercedVariableValues map[string]interface{}
 		if op != nil {
-			coercedVariableValues, _ = CoerceVariableValues(s, op, variableValues)
+			if v, err := CoerceVariableValues(s, op, variableValues); err != nil {
+				ret = append(ret, newSecondaryError(op, err.Error()))
+			} else {
+				coercedVariableValues = v
+			}
 		}
 
 		var cost int
@@ -91,7 +95,9 @@ func ValidateCost(operationName string, variableValues map[string]interface{}, m
 						switch selection := selection.(type) {
 						case *ast.Field:
 							if def, ok := typeInfo.FieldDefinitions[selection]; ok && coercedVariableValues != nil {
-								if args, err := CoerceArgumentValues(selection, def.Arguments, selection.Arguments, coercedVariableValues); err == nil {
+								if args, err := CoerceArgumentValues(selection, def.Arguments, selection.Arguments, coercedVariableValues); err != nil {
+									ret = append(ret, newSecondaryError(selection, err.Error()))
+								} else {
 									costContext := schema.FieldCostContext{
 										Context:   ctx,
 										Arguments: args,
@@ -125,13 +131,17 @@ func ValidateCost(operationName string, variableValues map[string]interface{}, m
 					}
 				}
 
+				if len(ret) > 0 {
+					return false
+				}
+
 				multipliers = append(multipliers, newMultiplier)
 				ctxs = append(ctxs, newCtx)
 				return true
 			})
 		}
 
-		if op != nil {
+		if len(ret) == 0 && op != nil {
 			visitNode(op)
 		}
 
